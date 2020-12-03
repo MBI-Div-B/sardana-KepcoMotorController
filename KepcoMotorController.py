@@ -11,18 +11,19 @@ class KepcoMotorController(MotorController):
     MaxDevice = 1
     
     def __init__(self, inst, props, *args, **kwargs):
-        super(kepcoController, self).__init__(
+        #super(kepcoController, self).__init__(
+        super(KepcoMotorController, self).__init__(
             inst, props, *args, **kwargs)
 
         self.rm = visa.ResourceManager('@py')
         self.inst = self.rm.open_resource(self.resource)
-        print 'Kepco Initialization'
+        print ('Kepco Initialization')
         idn = self.inst.query('*IDN?')
         if idn:
-            print idn
-            print 'Kepco is initialized!'
+            print (idn)
+            print ('Kepco is initialized!')
         else:
-            print 'Kepco is NOT initialized!'
+            print ('Kepco is NOT initialized!')
         # initialize hardware communication        
         self._motors = {}
         self._isMoving = None
@@ -49,21 +50,20 @@ class KepcoMotorController(MotorController):
         
         if self._isMoving == False:
             state = State.On
-        elif self._isMoving & (abs(pos-self._target) > self._threshold): 
-            # moving and not in threshold window
-            if (now-self._moveStartTime) < self._timeout:
-                # before timeout
-                state = State.Moving
-            else:
-                # after timeout
-                self._log.warning('Kepco Timeout')
+        elif self._isMoving:
+            if (abs(pos-self._target) > self._threshold):
+                # moving and not in threshold window
+                if (now-self._moveStartTime) < self._timeout:
+                    # before timeout
+                    state = State.Moving
+                else:
+                    # after timeout
+                    self._log.warning('Kepco Timeout')
+                    self._isMoving = False
+                    state = State.On
+            elif (abs(pos-self._target) <= self._threshold):
                 self._isMoving = False
                 state = State.On
-        elif self._isMoving & (abs(pos-self._target) <= self._threshold): 
-            # moving and within threshold window
-            self._isMoving = False
-            state = State.On
-            #print('Kepco Tagret: %f Kepco Current Pos: %f' % (self._target, pos))
         else:
             state = State.Fault
         
