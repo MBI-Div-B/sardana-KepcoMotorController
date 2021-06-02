@@ -1,4 +1,5 @@
-import visa, time
+import time
+import pyvisa as visa
 
 from sardana import State
 from sardana.pool.controller import MotorController
